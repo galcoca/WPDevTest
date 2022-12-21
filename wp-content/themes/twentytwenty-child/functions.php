@@ -494,4 +494,23 @@
 
 /*               END PART 5 SHORTCODE               */
 /*--------------------------------------------------*/
+
+/*--------------------------------------------------*/
+/*            BEGIN PART 6 Filters/Hooks            */
+
+	/* FUNCTIONS */
+		function updateShortCodeAttr( $output, $tag, $attr, $m ) {
+			$attr['id'] = 500;
+			$attr['bgcolor'] = 'fef84c';
+			global $shortcode_tags;
+			$content = isset( $m[5] ) ? $m[5] : null;
+			$output  = $m[1] . call_user_func( $shortcode_tags[ $tag ], $attr, $content, $tag ) . $m[6];
+			return $output;
+		}
+
+	/* FILTERS */
+		add_filter( 'do_shortcode_tag', 'updateShortCodeAttr', 1, 4 );
+
+/*             END PART 6 Filters/Hooks             */
+/*--------------------------------------------------*/
 ?>
