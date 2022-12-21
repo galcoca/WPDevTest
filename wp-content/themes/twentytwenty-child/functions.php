@@ -344,16 +344,6 @@
 				return $query;
 			}
 
-			function loadProductsTemplate(){
-				foreach( get_posts('post_type=posts') as $page ) {
-					$current_template = get_post_meta( $page->ID, '_wp_page_template', true );
-					$new_template = 'templateProducts.php';
-			
-					if( $current_template != $new_template )
-						update_post_meta( $page->ID, '_wp_page_template', $new_template );
-				}
-			}
-
 		/* Save Data */
 
 			function saveProductMetaBox( $post_id ) {
@@ -390,14 +380,13 @@
 				$wp_rewrite->set_permalink_structure("/%postname%/");
 			}
 	/* ACTIONS */
-	add_action( 'init', 'set_permalink');
-	add_action( 'init', 'createProductsCPT' );
-	add_action( 'init', 'customTaxonomyProducts');
-	add_action( 'add_meta_boxes', 'MetaBoxBatch' );
-	add_action( 'save_post', 'saveProductMetaBox' );
-	add_action( 'admin_init', 'productCreator');
-	add_action( 'pre_get_posts', 'queryProducts' );
-	add_action( 'admin_init', 'loadProductsTemplate' );
+		add_action( 'init', 'set_permalink');
+		add_action( 'init', 'createProductsCPT' );
+		add_action( 'init', 'customTaxonomyProducts');
+		add_action( 'add_meta_boxes', 'MetaBoxBatch' );
+		add_action( 'save_post', 'saveProductMetaBox' );
+		add_action( 'admin_init', 'productCreator');
+		add_action( 'pre_get_posts', 'queryProducts' );
 
 /*               END PART 4 POST TYPES              */
 /*--------------------------------------------------*/
@@ -512,5 +501,82 @@
 		add_filter( 'do_shortcode_tag', 'updateShortCodeAttr', 1, 4 );
 
 /*             END PART 6 Filters/Hooks             */
+/*--------------------------------------------------*/
+
+/*--------------------------------------------------*/
+/*               BEGIN PART 7 API REST              */
+
+	/* FUNCTIONS */
+
+	function getProductsEndPoint($request){
+		$arguments = array(
+			'post_type' => 'products',
+			'tax_query' => array(
+				array(
+					'taxonomy' => 'product_category',
+					'field'    => 'id',
+					'terms'    => $request['category_id'],
+				),
+			),
+		);
+
+		$posts = get_posts($arguments);
+
+		$newArray = array();
+		foreach ($posts as $key) {
+			$newPostDataID = $key->ID;
+			$metaNewPostData = get_post_meta( $newPostDataID );
+			$imagesNewPostData = $metaNewPostData['productimages_'][0];
+			$regularPriceNewPostData = $metaNewPostData['regularPrice'][0];
+			$salePriceNewPostData = $metaNewPostData['salePrice'][0];
+			$saleCheckerNewPostData = $metaNewPostData['saleChecker'][0];
+			$saleChecker = false;
+			if ($saleCheckerNewPostData)
+			{
+				$saleChecker = true;
+			}
+
+			if ($imagesNewPostData) {
+				$imagesNewPostData = explode(',', $imagesNewPostData);
+				$imagesNewArray = array();
+				foreach ($imagesNewPostData as $imageKey) {
+					$imagesNewArray[]=wp_get_attachment_url($imageKey);
+				}
+			} else {
+				$imagesNewArray = null;
+			}
+
+			$tempArray = array(
+				'title'=>$key->post_title,
+				'description'=>$key->post_content,
+				'featuredImage'=>get_the_post_thumbnail($newPostDataID),
+				'galleryImages'=> $imagesNewArray,
+				'price' => $regularPriceNewPostData,
+				'isonsale' => $saleChecker,
+				'salePrice' => $salePriceNewPostData
+			);
+			array_push($newArray, $tempArray);
+		}
+
+		if (empty($newArray)) { return new WP_Error( 'empty_category', 'There are no products to display', array('status' => 404) ); }
+	
+		$response = new WP_REST_Response($newArray);
+		$response->set_status(200);
+		return $response;
+	}
+
+	//ENDPOINT: https://domain.com/wp-json/twentytwenty-child/v1/products/CATEGORYID
+
+	/* REGISTER ROUTE */
+	add_action('rest_api_init', function () {
+		register_rest_route( 'twentytwenty-child/v1', 'products/(?P<category_id>\d+)',
+		array(
+			'methods'  => WP_REST_Server::READABLE,
+			'callback' => 'getProductsEndPoint',
+			'permission_callback' => '__return_true'
+		),);
+	});
+
+/*                END PART 7 API REST               */
 /*--------------------------------------------------*/
 ?>
