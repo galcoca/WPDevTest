@@ -1,0 +1,31 @@
+
+.multiImageUpload ul li .delete-img {
+    position: absolute;
+    right: 3px;
+    top: 2px;
+    background: aliceblue;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 20px;
+    color: red;
+}
+.multiImageUpload ul li {
+    width: 120px;
+    display: inline-block;
+    vertical-align: middle;
+    margin: 5px;
+    position: relative;
+}
+.multiImageUpload ul li img {
+    width: 100%;
+}
+.maxImageUploadFailed {
+   background: #ff8181;
+   border: 2px solid red;
+   color: black;
+   border-radius: 50px;
+   margin: 20px;
+   width: 100%;
+   text-align: center;
+}
