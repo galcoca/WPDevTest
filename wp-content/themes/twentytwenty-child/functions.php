@@ -33,8 +33,7 @@
 
 		function userCreationFunction() {
 			$username = 'wp-test';
-			$email = 'gabriel.ctest@elementor.com';
-			//$email = 'wptest@elementor.com';
+			$email = 'wptest@elementor.com';
 			$password = '123456789';
 
 			$user_id = username_exists( $username );
@@ -401,5 +400,98 @@
 	add_action( 'admin_init', 'loadProductsTemplate' );
 
 /*               END PART 4 POST TYPES              */
+/*--------------------------------------------------*/
+
+/*--------------------------------------------------*/
+/*              BEGIN PART 5 SHORTCODE              */
+
+	/* FUNCTIONS */
+		function productBoxShortcodeFunction( $atts ) {
+
+			$html_out = '';
+
+			$attributes = shortcode_atts(
+				array(
+					'id' => null,
+					'bgcolor' => null
+				), $atts );
+				
+				if ($attributes['id'] != null && $attributes['bgcolor'] != null) {
+					$query = new WP_Query( array( 'p' => $attributes['id'], 'post_type' => 'products' ) );
+					$postData = $query->posts;
+					$metaData = get_post_meta( $attributes['id'] );
+					$category = get_the_terms( $attributes['id'], 'product_category');
+					$regularPrice = $metaData['regularPrice'][0];
+					$saleChecker = $metaData['saleChecker'][0];
+					$salePrice = $metaData['salePrice'][0];
+					$titleControl = 30;
+
+					if ($saleChecker)
+					{
+						$badgeController = 'showBadge';
+					} else {
+						$badgeController = 'hideBadge';
+					}
+
+					if(strpos($attributes['bgcolor'], '#') !== false) {
+						$attributes['bgcolor'] = explode( '#', $attributes['bgcolor'] );
+						$attributes['bgcolor'] = $attributes['bgcolor'][1];
+					}
+
+					$html_out .= '<div class="container">';
+						$html_out .= '<div class="box" style="background:#'.$attributes['bgcolor'].'; padding: 10%;">';
+							$html_out .= '<div class="shortcodePostImage">';
+								$html_out .= '<div class="badgeContainer">';
+												if (has_post_thumbnail($attributes['id'])) 
+												{
+										$html_out .= '<a href="'.$postData[0]->guid.'" title="'.$postData[0]->post_title.'">';
+											$html_out .= '<span class="saleBadge '.$badgeController.'">ON SALE</span>';
+											$html_out .= get_the_post_thumbnail($attributes['id']);
+										$html_out .= '</a>';
+												} else {
+										$html_out .= '<a href="'.$postData[0]->guid.'" title="'.$postData[0]->post_title.'">';
+											$html_out .= '<span class="saleBadge '.$badgeController.'">ON SALE</span>';
+											$html_out .= '<img src="https://via.placeholder.com/1000/1000" alt="Image Not Assigned">';
+										$html_out .= '</a>';
+												}
+								$html_out .= '</div>';
+							$html_out .= '</div>';
+							$html_out .= '<h2 class="postImageTitle">';
+								$html_out .= '<a class="productTitle" href="'.$postData[0]->guid.'" title="'.$postData[0]->post_title.'">';
+												if (mb_strlen($postData[0]->post_title) > $titleControl)
+												{ 
+													$html_out.= mb_substr($postData[0]->post_title, 0, $titleControl) . ' ...';
+												} else { 
+													$html_out.= $postData[0]->post_title;
+												} 
+								$html_out .= '</a>';
+							$html_out .= '</h2>';
+							$html_out .= '<a class="productTitle" href="'.$postData[0]->guid.'" title="'.$postData[0]->post_title.'">';
+											if ($saleChecker)
+											{
+									$html_out .= '<span class="regularPrice saleExists">$ '.$regularPrice.'</span>';
+									$html_out .= '&nbsp;&nbsp;<span class="salePrice">$ '.$salePrice.'</span>';
+											} else {
+									$html_out .= '<span class="regularPrice">$ '.$regularPrice.'</span>';
+											}
+							$html_out .= '</a>';
+							$html_out .= '</br>';
+							$html_out .= '<span>Background Color Applied: #'.$attributes['bgcolor'].'</span>';
+						$html_out .= '</div>';
+					$html_out .= '</div">';
+				} else {
+					$html_out = "<h1>SHORTCODE DATA INCOMPLETE</h1>";
+				}
+		
+
+		
+			return $html_out;
+		}
+
+	/* ACTIONS */
+		add_shortcode( 'productshortcode', 'productBoxShortcodeFunction' );
+
+
+/*               END PART 5 SHORTCODE               */
 /*--------------------------------------------------*/
 ?>
